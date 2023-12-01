@@ -17,7 +17,7 @@ import {
   startOfDay
 } from "date-fns";
 import { it } from 'date-fns/locale'
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 function setClasses(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -42,11 +42,29 @@ function CustomDatePicker({ onDateChange }) {
 
   const firstDayCurrentMonth = parse(currentMonth, "MMM-yyyy", new Date());
 
+  const customPickerRef = useRef(null);
+  const inputTextRef = useRef(null);
+
+  function handleClickOutside(event) {
+    if (customPickerRef.current && !customPickerRef.current.contains(event.target) && !inputTextRef.current.contains(event.target)) {
+        setIsOpen(false);
+    }
+  }
+
+  useEffect(() => {
+    document.addEventListener('click', handleClickOutside);
+
+    return () => {
+        document.removeEventListener('click', handleClickOutside);
+    };
+    
+  }, [])
+
   let days = eachDayOfInterval({
-    // start: startOfWeek(firstDayCurrentMonth), PER VEDERE I GIORNI PRIMA DEL MESE SELEZIONATO
-    // end: endOfWeek(endOfMonth(firstDayCurrentMonth)), PER VEDERE I GIORNI DOPO IL MESE SELEZIONATO
     start: firstDayCurrentMonth,
     end: endOfMonth(firstDayCurrentMonth),
+    // start: startOfWeek(firstDayCurrentMonth), PER VEDERE I GIORNI PRIMA DEL MESE SELEZIONATO
+    // end: endOfWeek(endOfMonth(firstDayCurrentMonth)), PER VEDERE I GIORNI DOPO IL MESE SELEZIONATO
   });
 
   function goToPreviousMonth() {
@@ -66,12 +84,13 @@ function CustomDatePicker({ onDateChange }) {
 
   function selectDayFromCalendar(day) {
     setSelectedDay(day);
-    onDateChange({ day, currentMonth });
+    onDateChange({ day });
   }
 
   return (
     <>
       <input
+        ref={inputTextRef}
         type="text"
         onClick={() => toggleCalendar()}
         readOnly
@@ -81,7 +100,7 @@ function CustomDatePicker({ onDateChange }) {
         className="block w-auto rounded-md border-0 py-1.5 px-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400"
       />
       {isOpen && (
-        <div className="max-w-md px-4 sm:px-7 md:max-w-4xl md:px-6 relative">
+        <div className="max-w-md px-4 sm:px-7 md:max-w-4xl md:px-6 relative" ref={customPickerRef}>
           <div className="md:grid md:grid-cols-2 md:divide-x md:divide-gray-200">
             <div className="p-6 custom-shadow overlay-calendar">
               <div className="flex items-center">
